@@ -77,8 +77,7 @@ async calculateFee(endDate) {
         resolve({ error: error });
       })
       .then((result) => {   
-        let fee_in_dai = result.toNumber()/Math.pow(10,18);             
-       console.log(fee_in_dai);
+        let fee_in_dai = result.toNumber()/Math.pow(10,18);  
         resolve(fee_in_dai);
       });
   }).catch((error) => {
@@ -87,9 +86,7 @@ async calculateFee(endDate) {
 }
 
 // retrieves an atom
-  async retrieve(name, password) {
-    let self = this;
-    const hashedname = sha256(name + password);
+  async retrieve(hashedname) {
     return new Promise((resolve, reject) => {
       this.TimeAtomContract.at(PROXY_ADDRESS)
         .then(async (ad) => {
@@ -105,7 +102,7 @@ async calculateFee(endDate) {
             [
               {
                 type: "string",
-                name: "private_keys",
+                name: "timelocked_content",
               },
               {
                 name: "opening_date",
@@ -116,9 +113,8 @@ async calculateFee(endDate) {
           );
           result = decoded;
           let event;
-          if (result.private_keys.length > 1) {
+          if (result.timelocked_content.length > 1) {
             event = "BoxOpened";
-            result.private_keys = self.decrypt(result.private_keys, password);
           } else if (result.opening_date > 0) event = "BoxLocked";
           else event = "BoxNotFound";
           result.event = event;
@@ -134,8 +130,8 @@ async calculateFee(endDate) {
             case "BoxOpened":
               result.boxIsReady = true;
               break;
-          } //end switch
-          console.log(result);
+          } 
+     
           //return result;
           resolve(result);
         });
@@ -145,9 +141,7 @@ async calculateFee(endDate) {
   }
 
 /* Retrieves the public content of an atom */
-  async getPublicContent(name, password) {
-    let self = this;
-    const hashedname = sha256(name + password);
+  async getPublicContent(hashedname) { 
     return new Promise((resolve, reject) => {
       this.TimeAtomContract.at(PROXY_ADDRESS)
         .then(async (ad) => {
@@ -163,7 +157,7 @@ async calculateFee(endDate) {
             [
               {
                 type: "string",
-                name: "public_keys",
+                name: "public_content",
               },
               {
                 name: "opening_date",
@@ -173,9 +167,8 @@ async calculateFee(endDate) {
             result
           );    
           result = decoded;         
-          if (result.public_keys.length > 1) {
-            result.event = "BoxOpened";
-            result.public_keys = self.decrypt(result.public_keys, password);
+          if (result.public_content.length > 1) {
+            result.event = "BoxOpened";         
           } else result.event = "BoxNotFound";           
           resolve(result);
         });
@@ -205,8 +198,7 @@ async calculateFee(endDate) {
           console.log(error);
           resolve({ BoxReady: false });
         })
-        .then((result) => {
-          console.log(result);
+        .then((result) => {         
           if (typeof result == "undefined") result = { BoxReady: false };
           else if (result.logs.length) {
             result.logs.forEach((log) => {
